@@ -1,0 +1,45 @@
+misp:
+  misp_host: misp.natas.me
+  misp_port: 50000
+  misp_filter:
+    - misp_json_event
+    - misp_json_attribute
+    - misp_json
+    - misp_json_sighting
+    - misp_json_self
+  misp_status: False
+  misp_file_status: C:\automation-hunting\misp\misp.status
+  misp_file_event: C:\automation-hunting\misp\misp_evt.log
+
+elastic:
+  search_back: 240
+  max_timeout: 20
+  elastic_host: argos.natashell.me
+  fields:
+    - originIp
+    - originHostName
+    - commonEventName
+    - msgClassName
+    - impactedIp
+    - logMessage
+    - logSourceName
+
+logrhythm:
+  api_host: https://lr.apigw.me:8501
+  api_key: eyJhbGciOiJSUzI1NiIsInR
+  colabs:
+    - 1
+    - 5
+  owner: 0
+  status: 3
+  playbook_id: 3BEDB5AF-2BD0-4080-BBB4-3F86F72FA799
+  priority: 1
+  tags:
+    - misp
+    - incident
+    - collaboration
+    - sharing
+    - lr_integration
+    - hunting
+    - automation
+  top_es_evidence: 10

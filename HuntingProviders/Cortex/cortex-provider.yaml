@@ -1,0 +1,5 @@
+cortex:
+  cortex_url: http://cortex.natashell.me:9001
+  api_key: FFFFFFFFFFFFFFFFFFFFF
+  auto_analyzers_discovery: True
+  cleanup: False

@@ -1,0 +1,19 @@
+hive:
+  hive_url: http://hive.natas.me:9000
+  api_key: ffffffffffffffffffffffffff
+  alert_tags:
+    - LogRhythm
+    - TheHive4Py
+    - SiemAlert
+    - LR_Alert
+  source: LogRhythm
+  alert_type: LogRhythm_Alert
+  case_tags:
+    - LogRhythm
+    - TheHive4Py
+    - SiemCase
+    - LR_Case
+  ioc_tags:
+    - LogRhythm
+    - ioc
+    - lr_ioc

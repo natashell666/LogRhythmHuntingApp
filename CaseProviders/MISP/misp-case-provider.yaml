@@ -1,0 +1,4 @@
+misp:
+  misp_url: https://misp.natashell.me/
+  api_key: FFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+  verify_cert: False

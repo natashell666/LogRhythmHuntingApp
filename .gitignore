@@ -1,0 +1,8 @@
+HuntingProviders/__pycache__/
+*.pyc
+.idea/encodings.xml
+.idea/libraries/R_User_Library.xml
+.idea/LogRhythmThreatHuntingApp.iml
+.idea/modules.xml
+.idea/vcs.xml
+.idea/workspace.xml
