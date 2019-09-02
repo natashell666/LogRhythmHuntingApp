@@ -21,4 +21,7 @@ In case of the attrs they:
     * Will be add to a list
     * Will be looked internally and raise an Event, this event can generate the multiple as CAT
     
+--------------------
+
+Better instructions and README to be published during the week.
     
