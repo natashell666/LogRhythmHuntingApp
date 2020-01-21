@@ -61,7 +61,7 @@ class QueryLogRhythm:
     def __init__(self, elastic_host='localhost', elastic_port=9200):
         self.elastic_host = elastic_host
         self.elastic_port = elastic_port
-        self.elastic_client = Elasticsearch([{'host': 'argos.natashell.me', 'port': 9200}])
+        self.elastic_client = Elasticsearch([{'host': elastic_host, 'port': elastic_port}])
 
     def build_query(self, parameters):
         if parameters is None:
