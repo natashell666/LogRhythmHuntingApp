@@ -146,12 +146,20 @@ class QueryLogRhythm:
 
 
 if __name__ == '__main__':
-    ec = QueryLogRhythm(elastic_host='argos.natashell.me')
-    datos = {'ip-dst': '172.217.7.35'}
+	# Change those lines for your DX host, if you want to do some tests
+    ec = QueryLogRhythm(elastic_host='MY_DX_CLUSTER_ADDRESS')
+	# What do I want to search in my DX Cluser. In this example we're looking for all logs with Destination IP
+	# equals to 172.217.7.35
+    data = {'ip-dst': '172.217.7.35'}
 
-    #datos = {'md5': ['65674DB003381B328431D8ABD0E2E8F3E845EA3B', '65674DB003381B328431D8ABD0E2E8F3E845EA3B']}
+	# This example looks for two different Hashes, a Destination IP and one 
+	# filename (object or objectName field in LogRhythm).
+    #data = {'md5': ['65674DB003381B328431D8ABD0E2E8F3E845EA3B', '65674DB003381B328431D8ABD0E2E8F3E845EA3B']}
     #         'ip-dst': ['172.217.6.142'], 'filename': ['test.exe']}
-    query = ec.build_query(datos)
+	
+	#data must be a dict {'field' = 'value'} or {'field' = ['array', 'of', 'values']}
+	
+    query = ec.build_query(data)
     print(query)
     fields = list()
     fields.append('originIp')
