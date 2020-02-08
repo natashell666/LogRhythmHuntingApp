@@ -202,12 +202,12 @@ class MISPReceiver(threading.Thread):
                                                          list_item_type=self.lr_list_to_item_type[list_name])
 
                         # WE LOOK FOR THE ITEM
-                        # Si se encuentra guardar el dato (ioc, eventID, etc) en un archivo para consumirse en el AIE y
-                        # marcar alguna correlacion como muchos ioc del mismo evento
+                        # If we find the data (IoC, EventID, etc), we save it in a file to consume with a LogSource
+                        # and correlated it properly
                         attr_look_for = {attr_type: unique_values}
                         self.attr_on_elastic(attr_look_for, event_guid)
                     else:
-                        print('LISTA NOMBRE NO ENCONTRADO')
+                        print('List Name not Found')
 
 
                 else:
@@ -232,7 +232,7 @@ class MISPReceiver(threading.Thread):
         print('Query: ' + query)
         es_query, hits = ec.query_ec(query, self.fields, hours=self.search_back)
         if hits is not None and len(hits) > 0:
-            print("RAISE A FUCKING CASE!!!!!!!!!!!!!!!!!!!")
+            print("RAISE A CASE!!!!!!!!!!!!!!!!!!!")
             self.raise_case(misp_event, query, hits, es_query)
 
     def attr_on_elastic(self, attribute, event_id):
