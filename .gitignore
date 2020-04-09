@@ -6,6 +6,7 @@ HuntingProviders/__pycache__/
 .idea/modules.xml
 .idea/vcs.xml
 .idea/workspace.xml
+.idea/misc.xml
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -113,6 +114,7 @@ celerybeat.pid
 # Environments
 .env
 .venv
+.idea
 .idea/
 env/
 venv/
