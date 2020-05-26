@@ -187,6 +187,15 @@ This configuration YAML looks like this:
     #Files where the misp events or logs are saved
       misp_file_status: c:\misp-events\misp.status
       misp_file_event: c:\misp-events\misp_evt.log
+    #MISP API Directives for Sight 
+      misp_api_url: https://misp.natas.me/
+      misp_api_key: nuuqcaA
+      # For API Debug 
+      misp_api_debug: False
+      # For Certificate Validation on MISP
+      misp_cert_validation: False
+      # To enable or disable Sighting on MISP for attributes
+      misp_mark_sighting: True
 
     elastic:
     #How many historical hours look for
@@ -229,6 +238,11 @@ This configuration YAML looks like this:
         - automation
     # Max number of evidence saved as a Note in the LogRhythm case. Each result will be a note in the case
       top_es_evidence: 10
+
+If you want to create an event after a new IOC is detected follow the next steps:
+1. Create a new Log Source Type, using the Log Source Type Manager in the LogRhythm Rich Client, as "FlatFile" type
+2. Import the MPE rule form the LogRhythm Artifacts directory. This will create a new common event too.
+3. Create the Log Processing Policy, an decide if you want it as an Event, or just a Log.
 
 ## TODO
 * SmartResponse Plugins for manual/automatic execution on an  Alarm.

@@ -10,6 +10,10 @@ misp:
   misp_status: False
   misp_file_status: C:\automation-hunting\misp\misp.status
   misp_file_event: C:\automation-hunting\misp\misp_evt.log
+  misp_api_url: https://misp.natas.me/
+  misp_api_key: 1BYUwnuuqcaA
+  misp_api_debug: False
+  misp_mark_sighting: True
 
 elastic:
   search_back: 240

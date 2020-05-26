@@ -4,7 +4,10 @@ import json
 import signal
 import yaml
 import argparse
+import traceback
 from datetime import datetime
+from pymisp import PyMISP
+from pymisp import MISPSighting
 from .MISPTopic import MISPEvent
 from .QueryLogRhythm import QueryLogRhythm
 from CaseProviders.LogRhythm.LogRhythmCaseManagement import LogRhythmCaseManagement
@@ -52,6 +55,29 @@ class MISPReceiver(threading.Thread):
                             'MISP: Destination Address': 'IP', 'MISP: Source Address': 'IP',
                             'MISP: Users': 'StringValue', 'MISP: User Agent': 'StringValue'}
 
+    lr_list_name_to_list_type = {'MISP: Hashes': 'GeneralValue', 'MISP: Domains': 'GeneralValue',
+                                 'MISP: Email Address': 'GeneralValue', 'MISP: Filenames': 'GeneralValue',
+                                 'MISP: Mime Type': 'GeneralValue', 'MISP: Subjects': 'GeneralValue',
+                                 'MISP: URL': 'GeneralValue', 'MISP: Mutex': 'GeneralValue',
+                                 'MISP: Named Pipes': 'GeneralValue', 'MISP: Registry Keys': 'GeneralValue',
+                                 'MISP: Vulnerability': 'GeneralValue', 'MISP: Process': 'GeneralValue',
+                                 'MISP: Destination Address': 'IP', 'MISP: Source Address': 'IP',
+                                 'MISP: Users': 'User', 'MISP: User Agent': 'GeneralValue'}
+
+    lr_list_name_to_context = {'MISP: Hashes': ['Hash', 'Object'],
+                               'MISP: Domains': ['DomainImpacted', 'HostName', 'DomainOrigin'],
+                               'MISP: Email Address': ['Address'],
+                               'MISP: Filenames': ['Object', 'ObjectName'],
+                               'MISP: Mime Type': ['Object', 'ObjectName'],
+                               'MISP: Subjects': ['Subject'],
+                               'MISP: URL': ['URL'],
+                               'MISP: Mutex': ['Object', 'ParentProcessName', 'Process', 'ObjectName'],
+                               'MISP: Named Pipes': ['Object', 'ParentProcessName', 'Process', 'ObjectName'],
+                               'MISP: Registry Keys': ['Object', 'ObjectName'],
+                               'MISP: Vulnerability': ['Object', 'CVE'],
+                               'MISP: Process': ['Object', 'ParentProcessName', 'Process', 'ObjectName'],
+                               'MISP: User Agent': ['UserAgent']}
+
     def __init__(self, config_file='c:\\misp-events\\conf\\misp-provider.yaml', misp_events=list(), *args, **kwargs):
         super(MISPReceiver, self).__init__(*args, **kwargs)
 
@@ -64,6 +90,12 @@ class MISPReceiver(threading.Thread):
         self.misp_file_event = None
         self.misp_file_status = None
         self.valid_filters = None
+        self.misp_api_url = None
+        self.misp_api_key = None
+        self.misp_api_debug = False
+        self.misp_cert_validation = False
+        self.misp_mark_sighting = True
+        self.misp_api = None
 
         # ELASTIC Configuration Variables
         self.max_timeout = None
@@ -83,9 +115,14 @@ class MISPReceiver(threading.Thread):
         self.priority = None
         self.lr_tags = None
         self.top_es_evidence = None
+        self.list_entity = None
 
         if not self.get_config_data(config_file):
             raise Exception('Invalid Configuration File')
+
+        if self.misp_mark_sighting:
+            self.misp_api = PyMISP(self.misp_api_url, self.misp_api_key, ssl=self.misp_cert_validation,
+                                   debug=self.misp_api_debug)
 
         self.context = zmq.Context()
 
@@ -107,15 +144,23 @@ class MISPReceiver(threading.Thread):
                 message = self.socket.recv()
                 topic, s, m = message.decode('utf-8').partition(" ")
                 if topic in self.valid_filters:
-                    self.procesa(topic, s, m)
+                    try:
+                        self.process(topic, s, m)
+                    except:
+                        print('An error was found processing the topic: ' + topic + ' --> ' + s + ' --> ' + m)
+                        traceback.print_exc()
 
             for misp_topic in self.misp_events:
                 for uuid, misp_event in misp_topic.items():
                     now_time = datetime.now().timestamp()
                     if (now_time - misp_event.start_time) >= self.max_timeout:
                         print('Send event ' + uuid + 'to LogRhythm')
-                        self.send_misp_evt(misp_event)
-                        self.misp_events.remove(misp_topic)
+                        try:
+                            self.send_misp_evt(misp_event)
+                            self.misp_events.remove(misp_topic)
+                        except:
+                            print('An error was found processing the topic: ' + topic + ' --> ' + s + ' --> ' + m)
+                            traceback.print_exc()
 
     def stop(self):
         self._stop.set()
@@ -129,7 +174,7 @@ class MISPReceiver(threading.Thread):
         # print(mode + ' - ' + self.thread_name + ' - ' + message)
         return
 
-    def procesa(self, topic, s, m):
+    def process(self, topic, s, m):
         if topic == 'misp_json_self':
             self.send_output('syslog', m)
             return
@@ -180,6 +225,21 @@ class MISPReceiver(threading.Thread):
                         list_name = self.lr_list_misp_mapping[attr_type]
                         print('LIST: ' + list_name)
                         lr_lists = self.lr_list.get_lists_summary(list_name=list_name)
+
+                        # Creates the List if this one doesn't exists
+                        if lr_lists is None or len(lr_lists) < 1:
+                            if list_name == 'MISP: Destination Address' or list_name == 'MISP: Source Address' or \
+                                    list_name == 'MISP: Users':
+                                lst_context = None
+                            else:
+                                lst_context = self.lr_list_name_to_context[list_name]
+
+                            lr_lists = []
+                            lst_tmp = self.lr_list.create_list(list_name,
+                                                               list_type=self.lr_list_name_to_list_type[list_name],
+                                                               use_context=lst_context)
+                            lr_lists.append(lst_tmp)
+
                         if len(lr_lists) > 0:
                             guid = lr_lists[0]['guid']
                             if m_json['Attribute']['value'] is not None and \
@@ -205,7 +265,16 @@ class MISPReceiver(threading.Thread):
                         # If we find the data (IoC, EventID, etc), we save it in a file to consume with a LogSource
                         # and correlated it properly
                         attr_look_for = {attr_type: unique_values}
-                        self.attr_on_elastic(attr_look_for, event_guid)
+
+                        # If we got hits, and sights is enabled invoke the PyMISP API to add the value
+                        hits = self.attr_on_elastic(attr_look_for, event_guid)
+                        if self.misp_mark_sighting:
+                            sigh = MISPSighting()
+                            if hits:
+                                sigh['type'] = 0
+                            else:
+                                sigh['type'] = 1
+                            self.misp_api.add_sighting(sigh, m_json['Attribute']['id'])
                     else:
                         print('List Name not Found')
 
@@ -241,7 +310,10 @@ class MISPReceiver(threading.Thread):
         es_query, hits = ec.query_ec(query, self.fields, hours=self.search_back)
         print('HITS: ' + str(hits))
 
+        found_hits = False
+
         if hits is not None and len(hits) > 0:
+            found_hits = True
             event_file = open(self.misp_file_event, 'a+', encoding='utf-8')
             for hit in hits:
                 text_list = list()
@@ -256,6 +328,8 @@ class MISPReceiver(threading.Thread):
                         text_list.append(field + '=')
                 text_fields = ' #### '.join(text_list)
                 print(text_fields, file=event_file)
+
+        return found_hits
 
     def raise_case(self, misp_event, query, hits, es_query):
         # MISP Playbook: FB6C2D39-2519-4276-95BD-EE3834D18165
@@ -360,6 +434,11 @@ class MISPReceiver(threading.Thread):
             self.misp_file_event = cfg['misp']['misp_file_event']
             self.misp_file_status = cfg['misp']['misp_file_status']
             self.valid_filters = cfg['misp']['misp_filter']
+            self.misp_api_url = cfg['misp']['misp_api_url']
+            self.misp_api_key = cfg['misp']['misp_api_key']
+            self.misp_api_debug = cfg['misp']['misp_api_debug']
+            self.misp_cert_validation = cfg['misp']['misp_cert_validation']
+            self.misp_mark_sighting = cfg['misp']['misp_mark_sighting']
 
             # ELASTIC Configuration Variables
             self.max_timeout = cfg['elastic']['max_timeout']
@@ -379,6 +458,7 @@ class MISPReceiver(threading.Thread):
             self.priority = cfg['logrhythm']['priority']
             self.lr_tags = cfg['logrhythm']['tags']
             self.top_es_evidence = cfg['logrhythm']['top_es_evidence']
+            self.list_entity = cfg['logrhythm']['list_entity']
 
             valid = True
         return valid
@@ -391,19 +471,21 @@ class MISPReceiver(threading.Thread):
         else:
             if 'misp_host' not in cfg['misp'] or 'misp_port' not in cfg['misp'] or 'misp_filter' not in cfg['misp'] \
                     or 'misp_status' not in cfg['misp'] or 'misp_file_status' not in cfg['misp'] \
-                    or 'misp_file_event' not in cfg['misp']:
-                print('Not misp')
+                    or 'misp_file_event' not in cfg['misp'] or 'misp_api_url' not in cfg['misp'] \
+                    or 'misp_api_key' not in cfg['misp'] or 'misp_cert_validation' not in cfg['misp'] \
+                    or 'misp_mark_sighting' not in cfg['misp'] or 'misp_api_debug' not in cfg['misp']:
+                print('Incorrect MISP Configuration')
                 return False
             if 'search_back' not in cfg['elastic'] or 'max_timeout' not in cfg['elastic'] \
                     or 'elastic_host' not in cfg['elastic'] or 'fields' not in cfg['elastic']:
-                print('Not elastic')
+                print('Incorrect Elastic configuration')
                 return False
             if 'api_host' not in cfg['logrhythm'] or 'api_key' not in cfg['logrhythm'] \
                     or 'colabs' not in cfg['logrhythm'] or 'owner' not in cfg['logrhythm'] \
                     or 'status' not in cfg['logrhythm'] or 'playbook_id' not in cfg['logrhythm'] \
                     or 'priority' not in cfg['logrhythm'] or 'tags' not in cfg['logrhythm'] \
-                    or 'top_es_evidence' not in cfg['logrhythm']:
-                print('Not logrhythm')
+                    or 'top_es_evidence' not in cfg['logrhythm'] or 'list_entity' not in cfg['logrhythm']:
+                print('Incorrect LogRhythm Configuration')
                 return False
 
         return True

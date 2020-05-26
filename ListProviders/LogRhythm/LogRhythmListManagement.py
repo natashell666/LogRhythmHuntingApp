@@ -9,10 +9,11 @@ class LogRhythmListManagement:
                             'MsgSourceType', 'MPERule', 'Network', 'User', 'GeneralValue', 'Entity', 'RootEntity',
                             'IP', 'IPRange', 'Identity']
     logrhythm_list_status = ['Retired', 'Active']
-    logrhythm_list_context = ['None', 'Address', 'DomainImpacted', 'Group', 'HostName', 'Message', 'Object',
-                              'Process', 'Session', 'URL', 'User', 'VendorMsgID', 'UserAgent', 'ParentProcessId',
-                              'ParentProcessName', 'ParentProcessPath', 'SerialNumber', 'Reason', 'Status',
-                              'ThreatId', 'ThreatName', 'SessionType', 'Action', 'ResponseCode']
+    logrhythm_list_context = ['None', 'Address', 'DomainImpacted', 'Group', 'HostName', 'Message', 'Object', 'Process',
+                              'Session', 'Subject', 'URL', 'User', 'VendorMsgID', 'DomainOrigin', 'Hash', 'Policy',
+                              'VendorInfo', 'Result', 'ObjectName', 'CVE', 'UserAgent', 'ParentProcessId',
+                              'ParentProcessName', 'ParentProcessPath', 'SerialNumber', 'Reason', 'Status', 'ThreatId',
+                              'ThreatName', 'SessionType', 'Action', 'ResponseCode']
     logrhythm_list_access = ['Private', 'PublicAll', 'PublicGlobalAdmin', 'PublicGlobalAnalyst',
                              'PublicRestrictedAnalyst', 'PublicRestrictedAdmin']
     logrhythm_list_item_data_type = ['List', 'Int32', 'String', 'PortRange', 'IP', 'IPRange']
@@ -51,9 +52,11 @@ class LogRhythmListManagement:
             logrhythm_headers = {'MaxItemsThreshold': str(max_items), 'Authorization': 'Bearer ' + self.api_key}
         logrhythm_admin_uri = '/lr-admin-api/lists'
         logrhythm_admin_url = urllib.parse.urljoin(self.logrhythm_url, logrhythm_admin_uri)
-        print(logrhythm_headers)
+        # print(logrhythm_headers)
         logrhythm_response = requests.get(logrhythm_admin_url, headers=logrhythm_headers, verify=False)
-        if logrhythm_response.status_code != 200:
+        if logrhythm_response.status_code == 400:
+            return None
+        if logrhythm_response.status_code != 400 and logrhythm_response.status_code != 200:
             raise Exception('LogRhythm Admin API didn\'t response correctly: {}'.
                             format(logrhythm_response.status_code))
         return logrhythm_response.json()
@@ -71,7 +74,7 @@ class LogRhythmListManagement:
     def create_list(self, name, list_type='GeneralValue', restricted_read=False, read_access='PublicAll',
                     write_access='PublicAll', auto_import=False, use_pattern=False, replace_mode=False,
                     need_notify=False, expire=False, status='Active', short_desc=None, long_desc=None,
-                    use_context=[], import_file=None, ttl=1200, entity_name='Primary Site', owner_id=0):
+                    use_context=[], import_file=None, ttl=1250, entity_name='Primary Site', owner_id=-100):
 
         if list_type not in self.logrhythm_list_types:
             raise Exception('Incorrect List Type passed as argument')
@@ -86,12 +89,12 @@ class LogRhythmListManagement:
         create_list_request = {'listType': list_type, 'status': status, 'name': name, 'readAccess': read_access,
                                'writeAccess': write_access, 'restrictedRead': restricted_read,
                                'entityName': entity_name, 'doesExpire': expire, 'needToNotify': need_notify,
-                               'owner': owner_id, 'timeToLiveSeconds': ttl}
+                               'owner': owner_id, 'timeToLiveSeconds': ttl, 'autoImportOption': auto_import_json}
         if short_desc is not None:
             create_list_request['shortDescription'] = short_desc
         if long_desc is not None:
             create_list_request['longDescription'] = long_desc
-        if len(use_context) > 0:
+        if use_context is not None:
             create_list_request['useContext'] = use_context
         else:
             create_list_request['useContext'] = ['None']
@@ -102,10 +105,12 @@ class LogRhythmListManagement:
         logrhythm_response = requests.post(logrhythm_admin_url, json=create_list_request, headers=logrhythm_headers,
                                            verify=False)
         if logrhythm_response.status_code == 400:
+            print(logrhythm_response.status_code)
+            print(logrhythm_response.json())
             raise Exception('Invalid TTL time, must be greater that 1200')
         if logrhythm_response.status_code == 409:
             raise Exception('Invalid List Name, already in use')
-        if logrhythm_response.status_code != 201 or logrhythm_response.status_code != 200:
+        if logrhythm_response.status_code != 201 and logrhythm_response.status_code != 200:
             raise Exception('LogRhythm Case API didn\'t response correctly: {}'.
                             format(logrhythm_response.status_code))
 
@@ -212,10 +217,13 @@ class LogRhythmListManagement:
 
 
 if __name__ == '__main__':
-    lr_list = LogRhythmListManagement('https://lr.apigw.me:8501', 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1aWQi')
-    print('Len: ' + str(len(lr_list.get_lists_summary(list_name='MISP: HASHES'))))
-    data = lr_list.get_lists_summary(list_name='MISP: HASHES')[0]
-    print(str(data['name']) + ' ' + str(data['guid']))
+    lr_list = LogRhythmListManagement('https://lr.natas.me:8501', 'eyJhbGciOiJSUdw')
+    #print('Len: ' + str(len(lr_list.get_lists_summary(list_name='MISP: HASHES'))))
+    #data = lr_list.create_list('My Api Demo 3', list_type='GeneralValue', use_context=['Hash', 'Object'])
+    #print(data)
+    #print('Len: ' + str(len(lr_list.get_lists_summary(list_name='MISP: HASHES'))))
+    #print(str(data['name']) + ' ' + str(data['guid']))
+    #
 
-    lr_list.insert_item(data['guid'], '0002a41dd42036e566bfe94baa5f78e2a', '0002a41dd42036e566bfe94baa5f78e2a')
-    lr_list.insert_item(data['guid'], '0002a41dd42036e566bfe94baa5f78e2a', '0002a41dd42036e566bfe94baa5f78e2a')
+    #lr_list.insert_item(data['guid'], '0002a41dd42036e566bfe94baa5f78e2a', '0002a41dd42036e566bfe94baa5f78e2a')
+    #lr_list.insert_item(data['guid'], '0002a41dd42036e566bfe94baa5f78e2a', '0002a41dd42036e566bfe94baa5f78e2a')

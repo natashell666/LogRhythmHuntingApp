@@ -1,4 +1,5 @@
 from pymisp import PyMISP
+from pymisp import MISPSighting
 
 
 class MISPThreatIntel:
@@ -16,7 +17,7 @@ class MISPThreatIntel:
         self.misp_url = misp_url
         self.misp_key = misp_key
         self.misp_verifycert = misp_verifycert
-        self.misp_intel = PyMISP(self.misp_url, self.misp_key, self.misp_verifycert, self.misp_output, debug=debug)
+        self.misp_intel = PyMISP(self.misp_url, self.misp_key, self.misp_verifycert, debug=debug)
 
     def simple_attribute_search(self, attr_value, attr_type, timestamp='3000d', category=None):
         result = self.misp_intel.search(controller='attributes', value=attr_value, type=attr_type,
@@ -25,11 +26,12 @@ class MISPThreatIntel:
             raise Exception('MISP Threat Intelligence didn\'t response correctly')
         return result['response']
 
-    def unstructured_attribute_search(self, attr_value, timestamp='3000d'):
-        result = self.misp_intel.search_index(attribute=attr_value, timestamp=timestamp)
-        if result is None:
-            raise Exception('MISP Threat Intelligence didn\'t response correctly')
-        return result['response']
+    # New PyMISP library disable the value search. Commeting until find a new way
+    #def unstructured_attribute_search(self, attr_value, timestamp='3000d'):
+    #    result = self.misp_intel.search_index(attribute=attr_value, timestamp=timestamp)
+    #    if result is None:
+    #        raise Exception('MISP Threat Intelligence didn\'t response correctly')
+    #    return result['response']
 
     def get_event_details(self, event_id):
         result = self.misp_intel.get_event(event_id)
@@ -53,3 +55,4 @@ if __name__ == '__main__':
         event_detail = misp_intel.get_event_metadata(attribute['event_id'])
         print(attribute['event_id'] + ' -- ' + event_detail[0]['info'])
         print(attribute['category'] + ' -- ' + str(event_detail[0]['threat_level_id']))
+

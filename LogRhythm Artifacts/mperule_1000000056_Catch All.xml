@@ -1,0 +1,82 @@
+<?xml version="1.0" standalone="yes"?>
+<RuleDataset>
+  <ExportInfo>
+    <ExportConsoleVersion>7.5.0.0</ExportConsoleVersion>
+    <KBVersion>7.1.544.0</KBVersion>
+    <DateExported>2020-05-25T13:03:47.1977712-05:00</DateExported>
+    <ExportLicense>646</ExportLicense>
+    <ExportUser>logrhythmadmin</ExportUser>
+  </ExportInfo>
+  <MPERule>
+    <MPERuleID>1000000651</MPERuleID>
+    <MPERuleRegexID>1000000056</MPERuleRegexID>
+    <RuleStatus>1</RuleStatus>
+    <StatusName>Production</StatusName>
+    <CommonEventID>1000000129</CommonEventID>
+    <CommonEventName>MISP IoC Detected</CommonEventName>
+    <MsgClassID>2300</MsgClassID>
+    <Name>Catch All</Name>
+    <FullName>Catch All</FullName>
+    <BaseRule>1</BaseRule>
+    <DefMsgTTL>41</DefMsgTTL>
+    <DefMsgArchiveMode>0</DefMsgArchiveMode>
+    <DefMsgArchiveModeBool>false</DefMsgArchiveModeBool>
+    <DefForwarding>1</DefForwarding>
+    <DefForwardingBool>true</DefForwardingBool>
+    <DefRiskRating>8</DefRiskRating>
+    <DefFalseAlarmRating>0</DefFalseAlarmRating>
+    <InheritTech>1</InheritTech>
+    <RecordStatus>1</RecordStatus>
+    <DateUpdated>2019-07-11T06:57:48.497-05:00</DateUpdated>
+    <SortOrder>1</SortOrder>
+    <VersionMajor>4</VersionMajor>
+    <VersionMinor>1</VersionMinor>
+    <SHostIs>1</SHostIs>
+    <DHostIs>1</DHostIs>
+    <ServiceIs>0</ServiceIs>
+    <HostContext>0</HostContext>
+    <PrefixBaseRuleName>0</PrefixBaseRuleName>
+    <IsSystemRule>No</IsSystemRule>
+    <NewRuleRecordType>0</NewRuleRecordType>
+    <DefLogMartMode>13627389</DefLogMartMode>
+  </MPERule>
+  <MPERuleRegex>
+    <MPERuleRegexID>1000000056</MPERuleRegexID>
+    <RegexTagged>^evtid=(?&lt;session&gt;.*?) #### lucene=(?&lt;object&gt;.*?) #### index=(?&lt;vendorinfo&gt;.*?) #### id=(?&lt;vmid&gt;.*?) #### originIp=(?&lt;policy&gt;.*?) #### originHostName=(?&lt;objecttype&gt;.*?) #### commonEventName=(?&lt;reason&gt;.*?) #### msgClassName=(?&lt;subject&gt;.*?) #### impactedIp=(?&lt;result&gt;.*?)? #### logMessa.* #### logSourceName=(?&lt;objectname&gt;.*)$</RegexTagged>
+    <IgnoreCase>1</IgnoreCase>
+    <Multiline>0</Multiline>
+    <RecordStatus>1</RecordStatus>
+    <DateUpdated>2019-07-11T06:57:48.49-05:00</DateUpdated>
+    <PerfMonMode>1</PerfMonMode>
+    <VersionMajor>4</VersionMajor>
+    <VersionMinor>1</VersionMinor>
+  </MPERuleRegex>
+  <MPERuleToMST>
+    <MsgSourceTypeID>1000000020</MsgSourceTypeID>
+    <MPERuleRegexID>1000000056</MPERuleRegexID>
+    <SortOrder>1</SortOrder>
+    <AutoSort>0</AutoSort>
+  </MPERuleToMST>
+  <CommonEvent>
+    <CommonEventID>1000000129</CommonEventID>
+    <MsgClassID>2300</MsgClassID>
+    <Name>MISP IoC Detected</Name>
+    <ShortDesc />
+    <DefRiskRating>8</DefRiskRating>
+    <DateUpdated>2019-07-11T05:55:39.223-05:00</DateUpdated>
+    <RecordStatus>1</RecordStatus>
+  </CommonEvent>
+  <MsgSourceType>
+    <MsgSourceTypeID>1000000020</MsgSourceTypeID>
+    <Name>FlatFile - MISP Events File</Name>
+    <FullName>FlatFile - MISP Events File</FullName>
+    <Abbreviation>MISP Evt</Abbreviation>
+    <ShortDesc />
+    <LongDesc />
+    <ParentMsgSourceTypeID>1000000000</ParentMsgSourceTypeID>
+    <IsMst>1</IsMst>
+    <DateUpdated>2019-07-11T05:53:28.93-05:00</DateUpdated>
+    <MsgSourceFormat>3</MsgSourceFormat>
+    <RecordStatus>1</RecordStatus>
+  </MsgSourceType>
+</RuleDataset>
