@@ -1,4 +1,11 @@
 from pymisp import PyMISP
+import enum
+
+
+class WarnListFilter(enum.Enum):
+    All = 0
+    Enabled = 1
+    Disabled = 2
 
 
 class MISPThreatIntel:
@@ -16,7 +23,7 @@ class MISPThreatIntel:
         self.misp_url = misp_url
         self.misp_key = misp_key
         self.misp_verifycert = misp_verifycert
-        self.misp_intel = PyMISP(self.misp_url, self.misp_key, self.misp_verifycert, self.misp_output, debug=debug)
+        self.misp_intel = PyMISP(self.misp_url, self.misp_key, self.misp_verifycert, debug)
 
     def simple_attribute_search(self, attr_value, attr_type, timestamp='3000d', category=None):
         result = self.misp_intel.search(controller='attributes', value=attr_value, type=attr_type,
@@ -43,13 +50,33 @@ class MISPThreatIntel:
             raise Exception('MISP Threat Intelligence didn\'t response correctly')
         return result['response']
 
+    def get_warnlists(self, filter : WarnListFilter = WarnListFilter.All):
+        result = self.misp_intel.warninglists()
+        f_enable = True
+        if filter == WarnListFilter.All:
+            return result
+        elif filter == WarnListFilter.Enabled:
+            f_enable = True
+        else:
+            f_enable = False
+
+        new_list = list()
+        for item in result:
+            if item['Warninglist']['enabled'] == f_enable:
+                new_list.append(item)
+        return new_list
+
+    def get_warnlist_items(self, warnlist):
+        result = self.misp_intel.get_warninglist(warnlist)
+        if result is None:
+            raise Exception('MISP Threat Intelligence didn\'t response correctly')
+        return result['Warninglist']['WarninglistEntry']
+
 
 if __name__ == '__main__':
-    misp_intel = MISPThreatIntel('https://misp.natas.me/', 'N1BYUwnuuqcaA',
-                                 misp_verifycert=False)
-    attributes = misp_intel.simple_attribute_search('217.20.116.149', 'ip-dst', timestamp='1000d')
-    for attribute in attributes['Attribute']:
-        print('-----------------------')
-        event_detail = misp_intel.get_event_metadata(attribute['event_id'])
-        print(attribute['event_id'] + ' -- ' + event_detail[0]['info'])
-        print(attribute['category'] + ' -- ' + str(event_detail[0]['threat_level_id']))
+    misp_intel = MISPThreatIntel('https://hermes.natas.me/', 'CX4Op2F8vXzBzumivf6',
+                                 misp_verifycert=False, debug=False)
+    #lists = misp_intel.get_warnlists(filter=WarnListFilter.Disabled)
+    values = misp_intel.get_warnlist_items(42)
+    print('len: ' + str(len(values)))
+    print(str(values))
