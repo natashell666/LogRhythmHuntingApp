@@ -74,9 +74,9 @@ class MISPThreatIntel:
 
 
 if __name__ == '__main__':
-    misp_intel = MISPThreatIntel('https://hermes.natas.me/', 'CX4Op2F8vXzBzumivf6',
+    misp_intel = MISPThreatIntel('https://misp.natas.me/', 'CX4Op2F8vXzBzumivf',
                                  misp_verifycert=False, debug=False)
-    #lists = misp_intel.get_warnlists(filter=WarnListFilter.Disabled)
-    values = misp_intel.get_warnlist_items(42)
+    values = misp_intel.get_warnlists(filter=WarnListFilter.Disabled)
+    #values = misp_intel.get_warnlist_items(42)
     print('len: ' + str(len(values)))
     print(str(values))
