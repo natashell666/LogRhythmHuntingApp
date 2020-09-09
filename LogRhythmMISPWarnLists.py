@@ -1,3 +1,4 @@
+from ListProviders.LogRhythm.LogRhythmListManagement import LogRhythmListManagement
 from ThreatIntellProviders.MISP.MISPThreatIntel import MISPThreatIntel
 from ThreatIntellProviders.MISP.MISPThreatIntel import WarnListFilter
 import argparse
@@ -48,14 +49,17 @@ lr_list_to_item_type = {'MISP WarnList: Hashes': 'StringValue', 'MISP WarnList: 
                         'MISP WarnList: Users': 'StringValue', 'MISP WarnList: User Agent': 'StringValue'}
 
 
-def save_intel_to_file(misp_object, file_name):
-    list_file = open(file_name, 'w', encoding='utf-8')
+def save_intel_to_file(misp_object, _file_name):
+    list_file = open(_file_name, 'w', encoding='utf-8')
     for value in misp_object:
         print(str(value.encode('utf-8'), 'utf-8'), file=list_file)
     list_file.close()
 
-def save_intel_to_lr_list(misp_object, lr_api_gw, lr_api_key):
 
+def save_intel_to_lr_list(misp_object, lr_api_gw, lr_api_key, list_name):
+    lr_list = LogRhythmListManagement(lr_api_gw, lr_api_key)
+    
+    return True
 
 
 class WarnList:

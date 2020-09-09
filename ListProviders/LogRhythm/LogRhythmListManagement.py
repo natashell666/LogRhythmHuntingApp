@@ -43,6 +43,7 @@ class LogRhythmListManagement:
             requests_log.setLevel(logging.DEBUG)
             requests_log.propagate = True
 
+    # Adding status_code to 404 to support older LogRhythm Versions.
     def get_lists_summary(self, list_name=None, max_items=1000):
         print(list_name)
         if list_name is not None:
@@ -54,9 +55,10 @@ class LogRhythmListManagement:
         logrhythm_admin_url = urllib.parse.urljoin(self.logrhythm_url, logrhythm_admin_uri)
         # print(logrhythm_headers)
         logrhythm_response = requests.get(logrhythm_admin_url, headers=logrhythm_headers, verify=False)
-        if logrhythm_response.status_code == 400:
+        if logrhythm_response.status_code == 400 or logrhythm_response.status_code == 404:
             return None
-        if logrhythm_response.status_code != 400 and logrhythm_response.status_code != 200:
+        if logrhythm_response.status_code != 400 and logrhythm_response.status_code != 200 and \
+                logrhythm_response.status_code != 404:
             raise Exception('LogRhythm Admin API didn\'t response correctly: {}'.
                             format(logrhythm_response.status_code))
         return logrhythm_response.json()
