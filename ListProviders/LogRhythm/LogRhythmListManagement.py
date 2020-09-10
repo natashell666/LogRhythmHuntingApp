@@ -175,12 +175,12 @@ class LogRhythmListManagement:
             item_request['expirationDate'] = expiration_date
 
         add_item_request = {'items': [item_request]}
-        print(str(add_item_request))
+        #print(str(add_item_request))
 
         logrhythm_headers = {"Authorization": "Bearer " + self.api_key}
         logrhythm_admin_uri = '/lr-admin-api/lists/' + guid + '/items'
         logrhythm_admin_url = urllib.parse.urljoin(self.logrhythm_url, logrhythm_admin_uri)
-        print(logrhythm_admin_url)
+        #print(logrhythm_admin_url)
 
         logrhythm_response = requests.post(logrhythm_admin_url, json=add_item_request, headers=logrhythm_headers,
                                            verify=False)

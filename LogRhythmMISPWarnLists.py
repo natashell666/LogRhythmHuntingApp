@@ -1,8 +1,9 @@
+import traceback
+import argparse
+import os
 from ListProviders.LogRhythm.LogRhythmListManagement import LogRhythmListManagement
 from ThreatIntellProviders.MISP.MISPThreatIntel import MISPThreatIntel
 from ThreatIntellProviders.MISP.MISPThreatIntel import WarnListFilter
-import argparse
-import os
 
 
 lr_list_misp_mapping = {'authentihash': 'MISP WarnList: Hashes', 'cdhash': 'MISP WarnList: Hashes',
@@ -48,6 +49,29 @@ lr_list_to_item_type = {'MISP WarnList: Hashes': 'StringValue', 'MISP WarnList: 
                         'MISP WarnList: Destination Address': 'IP', 'MISP WarnList: Source Address': 'IP',
                         'MISP WarnList: Users': 'StringValue', 'MISP WarnList: User Agent': 'StringValue'}
 
+lr_list_name_to_list_type = {'MISP WarnList: Hashes': 'GeneralValue', 'MISP WarnList: Domains': 'GeneralValue',
+                             'MISP WarnList: Email Address': 'GeneralValue', 'MISP WarnList: Filenames': 'GeneralValue',
+                             'MISP WarnList: Mime Type': 'GeneralValue', 'MISP WarnList: Subjects': 'GeneralValue',
+                             'MISP WarnList: URL': 'GeneralValue', 'MISP WarnList: Mutex': 'GeneralValue',
+                             'MISP WarnList: Named Pipes': 'GeneralValue', 'MISP WarnList: Registry Keys': 'GeneralValue',
+                             'MISP WarnList: Vulnerability': 'GeneralValue', 'MISP WarnList: Process': 'GeneralValue',
+                             'MISP WarnList: Destination Address': 'IP', 'MISP WarnList: Source Address': 'IP',
+                             'MISP WarnList: Users': 'User', 'MISP WarnList: User Agent': 'GeneralValue'}
+
+lr_list_name_to_context = {'MISP WarnList: Hashes': ['Hash', 'Object'],
+                           'MISP WarnList: Domains': ['DomainImpacted', 'HostName', 'DomainOrigin'],
+                           'MISP WarnList: Email Address': ['Address'],
+                           'MISP WarnList: Filenames': ['Object', 'ObjectName'],
+                           'MISP WarnList: Mime Type': ['Object', 'ObjectName'],
+                           'MISP WarnList: Subjects': ['Subject'],
+                           'MISP WarnList: URL': ['URL'],
+                           'MISP WarnList: Mutex': ['Object', 'ParentProcessName', 'Process', 'ObjectName'],
+                           'MISP WarnList: Named Pipes': ['Object', 'ParentProcessName', 'Process', 'ObjectName'],
+                           'MISP WarnList: Registry Keys': ['Object', 'ObjectName'],
+                           'MISP WarnList: Vulnerability': ['Object', 'CVE'],
+                           'MISP WarnList: Process': ['Object', 'ParentProcessName', 'Process', 'ObjectName'],
+                           'MISP WarnList: User Agent': ['UserAgent']}
+
 
 def save_intel_to_file(misp_object, _file_name):
     list_file = open(_file_name, 'w', encoding='utf-8')
@@ -57,9 +81,29 @@ def save_intel_to_file(misp_object, _file_name):
 
 
 def save_intel_to_lr_list(misp_object, lr_api_gw, lr_api_key, list_name):
-    lr_list = LogRhythmListManagement(lr_api_gw, lr_api_key)
-    
-    return True
+    list_api = LogRhythmListManagement(lr_api_gw, lr_api_key)
+    warn_lists = list_api.get_lists_summary(list_name=list_name)
+    if warn_lists is None or len(warn_lists) < 1:
+        if list_name == 'MISP WarnList: Destination Address' or list_name == 'MISP WarnList: Source Address' or \
+                list_name == 'MISP WarnList: Users':
+            lst_context = None
+        else:
+            lst_context = lr_list_name_to_context[list_name]
+
+        warn_lists = []
+        warn_tmp = list_api.create_list(list_name, list_type=lr_list_name_to_list_type[list_name],
+                                        use_context=lst_context)
+        warn_lists.append(warn_tmp)
+
+        if len(warn_lists) > 0:
+            guid = warn_lists[0]['guid']
+            for item in misp_object:
+                try:
+                    list_api.insert_item(guid, item, item, list_item_data=lr_list_to_data_type[list_name],
+                                         list_item_type=lr_list_to_item_type[list_name])
+                except Exception as e:
+                    print('Error adding the item: ' + str(item))
+                    traceback.print_exc()
 
 
 class WarnList:
@@ -124,6 +168,7 @@ if __name__ == '__main__':
 
     api_group = parser.add_argument_group(title='LogRhythm API options')
     api_group.add_argument("--lr_api_key", help='LogRhythm API Key')
+    api_group.add_argument("--lr_api_gw", help='LogRhythm API Gateway Host', default='https://localhost:8505')
 
     parser.add_argument('--misp_url', help='MISP Url', default='https://localhost/')
     parser.add_argument('--misp_key', help='MISP API Key', required=True)
@@ -134,11 +179,10 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    if args.mode == 'api' and not args.api_key:
-        parser.error('The --api argument requires the --api_key parameter set')
+    if args.mode == 'api' and not args.lr_api_key:
+        parser.error('The --api argument requires the --lr_api_key parameter set')
 
-    api = WarnList('https://misp.natas/', 'CX4Op2F8vXzBzumivf6', misp_verifycert=False,
-                   debug=False)
+    api = WarnList(args.misp_url, args.misp_key, misp_verifycert=False, debug=False)
 
     if args.list_id == -1:
         lists = []
@@ -149,7 +193,7 @@ if __name__ == '__main__':
         for _list in lists:
             lists_items = api.process_warn_list(_list['id'])
             if args.mode == 'api':
-                print('Use API to create the List')
+                save_intel_to_lr_list(lists_items, args.lr_api_gw, args.lr_api_key, _list['list'])
             else:
                 file_name = _list['list'].replace(": ", " - ") + '.lst'
                 file_path = os.path.join(args.lr_list_directory, file_name)
@@ -157,12 +201,7 @@ if __name__ == '__main__':
     else:
         lists_items = api.process_warn_list(args.list_id)
         if args.mode == 'api':
-            print('Use API to create the List')
+            save_intel_to_lr_list(lists_items, args.lr_api_gw, args.lr_api_key, api.get_list_for_id(args.list_id))
         else:
             file_name = api.get_list_for_id(args.list_id).replace(": ", " - ") + '.lst'
             file_path = os.path.join(args.lr_list_directory, file_name)
-            save_intel_to_file(lists_items, file_path)
-
-    #lists = api.get_lists(enabled=WarnListFilter.All)
-    #print('len: ' + str(len(lists)))
-    #print(str(lists))
