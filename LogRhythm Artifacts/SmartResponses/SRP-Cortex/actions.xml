@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<remv1:Remediation-Plugin xmlns:remv1="RemediationVersion1.xsd" Name="Cortex Plugin V1.0" Guid="7a515090-f9c7-11ea-adc1-0242ac120002" Version="2" IsLogRhythmPlugin="false">
+<remv1:Remediation-Plugin xmlns:remv1="RemediationVersion1.xsd" Name="Cortex Plugin V1.0" Guid="72db0bea-8ba6-4bcc-9728-4fc898a25d68" Version="2" IsLogRhythmPlugin="false">
   <remv1:Action Name="Create Cortex Configuration File" Command="powershell.exe">
     <remv1:ConstantParameter Name="Script" Switch="-file Configuration.ps1" Order="1" />
     <remv1:EncryptedParameter>
@@ -8,7 +8,11 @@
     <remv1:StringParameter Name="Cortex API URL" Switch="-CortexAPIUrl" Order="3" />
 	<remv1:StringParameter Name="Python Installation Path" Switch="-PythonPath" Order="4" />
 	<remv1:StringParameter Name="LogRhythmHuntingApp Root Path" Switch="-HuntingAppRootPath" Order="5" />
-	<remv1:StringParameter Name="Waiting Time on Analyzer" Switch="-WaitTime" Order="6" />
+	<remv1:StringParameter Name="Waiting Time on Analyzer" Switch="-WaitTime" Order="6" >
+      <remv1:DefaultInput>
+        <remv1:StaticInput Value="30" />
+      </remv1:DefaultInput>
+    </remv1:StringParameter>
   </remv1:Action>
   <remv1:Action Name="Get Available Analyzers" Command="powershell.exe">
     <remv1:ConstantParameter Name="Script" Switch="-file GetAnalyzers.ps1" Order="1" />
