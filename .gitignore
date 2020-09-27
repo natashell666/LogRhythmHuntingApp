@@ -139,3 +139,5 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+.idea/LogRhythmHuntingApp.iml
+.idea/misc.xml
