@@ -76,7 +76,7 @@ class LogRhythmListManagement:
     def create_list(self, name, list_type='GeneralValue', restricted_read=False, read_access='PublicAll',
                     write_access='PublicAll', auto_import=False, use_pattern=False, replace_mode=False,
                     need_notify=False, expire=False, status='Active', short_desc=None, long_desc=None,
-                    use_context=[], import_file=None, ttl=1250, entity_name='Primary Site', owner_id=-100):
+                    use_context=[], import_file=None, ttl=0, entity_name='Primary Site', owner_id=-100):
 
         if list_type not in self.logrhythm_list_types:
             raise Exception('Incorrect List Type passed as argument')
@@ -87,11 +87,17 @@ class LogRhythmListManagement:
                 raise Exception('import_file is None, even when auto_import has been selected')
             auto_import_json['usePatterns'] = use_pattern
             auto_import_json['replaceExisting'] = replace_mode
+        if ttl != 0:
+            create_list_request = {'listType': list_type, 'status': status, 'name': name, 'readAccess': read_access,
+                                   'writeAccess': write_access, 'restrictedRead': restricted_read,
+                                   'entityName': entity_name, 'doesExpire': expire, 'needToNotify': need_notify,
+                                   'owner': owner_id, 'timeToLiveSeconds': ttl, 'autoImportOption': auto_import_json}
+        else:
+            create_list_request = {'listType': list_type, 'status': status, 'name': name, 'readAccess': read_access,
+                                   'writeAccess': write_access, 'restrictedRead': restricted_read,
+                                   'entityName': entity_name, 'doesExpire': expire, 'needToNotify': need_notify,
+                                   'owner': owner_id, 'autoImportOption': auto_import_json}
 
-        create_list_request = {'listType': list_type, 'status': status, 'name': name, 'readAccess': read_access,
-                               'writeAccess': write_access, 'restrictedRead': restricted_read,
-                               'entityName': entity_name, 'doesExpire': expire, 'needToNotify': need_notify,
-                               'owner': owner_id, 'timeToLiveSeconds': ttl, 'autoImportOption': auto_import_json}
         if short_desc is not None:
             create_list_request['shortDescription'] = short_desc
         if long_desc is not None:
